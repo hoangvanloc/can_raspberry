@@ -35,14 +35,9 @@ class DeviceInforManager():
     hbPeriod = 1000
 devInfoMgt = DeviceInforManager()
 #Need to define 2 paramter CAN_RTR_REMOTE and CAN_RTR_DATA
-bus = None
 
-def BSP_CAN_Init(self):
-    try:
-	    bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
-    except OSError:
-	    print('Cannot find PiCAN board.')
-	    exit()
+bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
+
 
 def BSP_CAN_FillTxMailbox(_pdata):
     retval = 0
@@ -101,7 +96,7 @@ def BSP_CAN_StartHB_BroadCast(self):
     _txHeader.ExtId = 0x00
     _txHeader.IDE   = False
     _txHeader.RTR   = False
-    _txHeader.DLC   = 2; #/*ask for 6 data from DCB nodes*/
+    _txHeader.DLC   = 2 #/*ask for 6 data from DCB nodes*/
     _txHeader.TransmitGlobalTime = 0.0
     _temp[0] = devInfoMgt.hbPeriod
     _temp[1] = (devInfoMgt.hbPeriod >> 8)
@@ -116,13 +111,13 @@ def BSP_CAN_FreshLLD(self):
     _txHeader.ExtId = False
     _txHeader.IDE   = False
     _txHeader.RTR   = True
-    _txHeader.DLC   = 8; #/*ask for 6 data from DCB nodes*/
+    _txHeader.DLC   = 8 #/*ask for 6 data from DCB nodes*/
     _txHeader.TransmitGlobalTime = 0.0
     for i in range(0,14):
         if devInfoMgt.dNodeOnline[i] != 0:
             #/* 1. send instruction No.1*/
             _txHeader.StdId = (i << 4) | 0x201
-            canCmdIdFlag = _txHeader.StdId | 0x400;# /*equel to the receive message id*/
+            canCmdIdFlag = _txHeader.StdId | 0x400# /*equel to the receive message id*/
             msg = can.Message(is_remote_frame= _txHeader.RTR,arbitration_id=_txHeader.StdId,data=_temp,dlc=_txHeader.DLC,extended_id=False) 
             retval = bus.send(msg) 
             _timeOutNum = 10
@@ -130,10 +125,10 @@ def BSP_CAN_FreshLLD(self):
                 time.sleep(5)
                 _timeOutNum -= 1
             if _timeOutNum == 0:
-                devInfoMgt.dcbInfo[i].basicInfo.busStatus = CAN_NODE_NOReply; #/*Error flag*/
+                devInfoMgt.dcbInfo[i].basicInfo.busStatus = CAN_NODE_NOReply #/*Error flag*/
                 continue
             _txHeader.StdId = (i << 4) | 0x202
-            canCmdIdFlag = _txHeader.StdId | 0x400; #/*equel to the receive message id*/
+            canCmdIdFlag = _txHeader.StdId | 0x400 #/*equel to the receive message id*/
             msg = can.Message(is_remote_frame= _txHeader.RTR,arbitration_id=_txHeader.StdId,data=_temp,dlc=_txHeader.DLC,extended_id=False)   
             retval = bus.send(msg)
             _timeOutNum = 10
@@ -141,7 +136,7 @@ def BSP_CAN_FreshLLD(self):
                 time.sleep(5)
                 _timeOutNum -= 1
             if _timeOutNum == 0:
-                devInfoMgt.dcbInfo[i].basicInfo.busStatus = CAN_NODE_NOReply;# /*Error flag*/
+                devInfoMgt.dcbInfo[i].basicInfo.busStatus = CAN_NODE_NOReply# /*Error flag*/
     if retval < 0:
         return 0
     return 1

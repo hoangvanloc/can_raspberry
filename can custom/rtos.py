@@ -34,7 +34,7 @@ def DefaultTskFunc(self):
         else:
             can_bus.devInfoMgt.mcbInfo.devStatus = NST_CScanUCplt
         led.BSP_LED2_ON()
-        time.sleep(100)
+        time.sleep(1)
     #2. Obtain nodes basic-information And Initialize buffer
     can_bus.BSP_CAN_FreshLLD()
     #allocate memory for DCB(LLDs) mirror state*/
@@ -113,7 +113,7 @@ def cRxF1TskFunc(self):
                 can_bus.devInfoMgt.dNodeHBFlag[_nodeId - 1] += 1
             if _cmdCode == 0:
                 if _len >=6:
-                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.busStatus = _dBuf 
+                    #can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.busStatus = _dBuf #Need more infor mation of struct-> this use pointer to copy data in to struct
             elif _cmdCode == 1:
                 if _len == 8:
                     _checkSum = 0
@@ -153,24 +153,24 @@ def cNMT_Callback(self):
     #Define code here
 
 
-if __name__ == "__main__":
-    led.LED_Init()
-    can_bus.BSP_CAN_Init()
-    t = threading.Thread(target = DefaultTskFunc)
-    t.start()
-    t2 = threading.Thread(target = uRxTskFunc)
-    t2.start()
-    t3 = threading.Thread(target = cRxF0TskFunc)
-    t3.start()
-    t4 = threading.Thread(target = cRxF1TskFunc)
-    t4.start()
-    t5 = threading.Thread(target = uTxTskFunc)
-    t5.start()
-    t6 = threading.Thread(target = cTxTskFunc)
-    t6.start()
-    t7 = threading.Thread(target = localTskFunc)
-    t7.start()
-    while True:
+
+led.LED_Init()
+can_bus.BSP_CAN_Init()
+t = threading.Thread(target = DefaultTskFunc)
+t.start()
+t2 = threading.Thread(target = uRxTskFunc)
+t2.start()
+t3 = threading.Thread(target = cRxF0TskFunc)
+t3.start()
+t4 = threading.Thread(target = cRxF1TskFunc)
+t4.start()
+t5 = threading.Thread(target = uTxTskFunc)
+t5.start()
+t6 = threading.Thread(target = cTxTskFunc)
+t6.start()
+t7 = threading.Thread(target = localTskFunc)
+t7.start()
+
         
 
     

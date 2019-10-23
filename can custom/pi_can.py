@@ -18,7 +18,7 @@ class CAN_RxHeaderTypeDef():
     DLC = None       #Remote frames can only be transmitted with a data length code (DLC) identical to the DLC of the corresponding data frame
     TransmitGlobalTime = 0.0#timestamp
 class BasicInfor:
-    busStatus = []
+    busStatus = CAN_NODE_NOReply
 class DCBInfor():
     basicInfo = BasicInfor()
     addStart = []

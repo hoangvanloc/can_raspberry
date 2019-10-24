@@ -3,6 +3,8 @@ import time
 numNodeOffline = 0
 CAN_NODE_OK = 1
 CAN_NODE_NOReply = 0
+CAN_ID_EXT = True
+CAN_RTR_REMOTE = True
 class CAN_TxHeaderTypeDef():
     IDE = False      #is extended_id? true for Use extend ID
     StdId = 0        #arbitration_id
@@ -33,6 +35,7 @@ class DeviceInforManager():
     dcbInfo = DCBInfor()
     mcbInfo = MCBInfor()
     hbPeriod = 1000
+    broadInterval = 1000
 devInfoMgt = DeviceInforManager()
 #Need to define 2 paramter CAN_RTR_REMOTE and CAN_RTR_DATA
 
@@ -57,6 +60,7 @@ def BSP_CAN_FillTxMailbox(_pdata):
     return 1
 def BSP_CAN_Scan_BroadCast(self):
     temp = []
+    #/*1. find header file */
     _txHeader = CAN_TxHeaderTypeDef()
     _txHeader.StdId = 0x2f0
     _txHeader.ExtId = 0
@@ -64,11 +68,13 @@ def BSP_CAN_Scan_BroadCast(self):
     _txHeader.RTR   = True
     _txHeader.DLC   = 6
     _txHeader.TransmitGlobalTime = 0.0
+    #/*2. send out broadcast message*/
     msg = can.Message(is_remote_frame=_txHeader.RTR,arbitration_id=_txHeader.StdId,data=temp,dlc=_txHeader.DLC,extended_id=False)    
     retval = bus.send(msg)
     if retval < 0:
         return 0
-    time.sleep((200+14)/1000)
+    #/*3. delay and wait. In this stage, task will automaticess rx message */
+    time.sleep(200 + devInfoMgt.broadInterval * 14) # /*The total wait time and 200ms delay*/
     
     for j in range(0,14):
         if (devInfoMgt.dNodeEnable[j] != 0):
@@ -80,7 +86,7 @@ def BSP_CAN_Scan_BroadCast(self):
                 retval = bus.send(msg)
                 if retval < 0:
                     continue
-                time.sleep(150/1000)
+                time.sleep(0.15)
                 if (devInfoMgt.dNodeOnline[j] >= CAN_NODE_OK):
                     devInfoMgt.mcbInfo.canNodeStatus += 1
                 else:
@@ -122,7 +128,7 @@ def BSP_CAN_FreshLLD(self):
             retval = bus.send(msg) 
             _timeOutNum = 10
             while (canCmdIdFlag != 0) and (_timeOutNum != 0):
-                time.sleep(5)
+                time.sleep(0.005)
                 _timeOutNum -= 1
             if _timeOutNum == 0:
                 devInfoMgt.dcbInfo[i].basicInfo.busStatus = CAN_NODE_NOReply #/*Error flag*/
@@ -133,7 +139,7 @@ def BSP_CAN_FreshLLD(self):
             retval = bus.send(msg)
             _timeOutNum = 10
             while (canCmdIdFlag != 0) and (_timeOutNum != 0):
-                time.sleep(5)
+                time.sleep(0.005)
                 _timeOutNum -= 1
             if _timeOutNum == 0:
                 devInfoMgt.dcbInfo[i].basicInfo.busStatus = CAN_NODE_NOReply# /*Error flag*/

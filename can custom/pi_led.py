@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 LED2_PIN = 10
 LEDST_PIN = 11
 def LED_Init():
+    GPIO.setmode(GPIO.BCM)
     GPIO.setup(LED2_PIN, GPIO.OUT)
     GPIO.setup(LEDST_PIN, GPIO.OUT)
 def BSP_LED2_ON():

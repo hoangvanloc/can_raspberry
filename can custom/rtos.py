@@ -115,7 +115,7 @@ def cRxF1TskFunc():
                 can_bus.devInfoMgt.dNodeHBFlag[_nodeId - 1] += 1
             if _cmdCode == 0:
                 if _len >=6:
-                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.busStatus = _dBuf #Need more infor mation of struct-> this use pointer to copy data in to struct
+                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.busStatus = _dBuf #Need more information of struct-> this use pointer to copy data in to struct
             elif _cmdCode == 1:
                 if _len == 8:
                     _checkSum = 0
@@ -141,35 +141,37 @@ def uTxTskFunc():
             p2m1 = uTxMQ.get()
             # BSP_PackUTxMsg(p2mq)  ? where is this funtion?
 def cTxTskFunc():
+    p2mq = []
     while True:
         if not cTxMQ.empty():
             p2mq = cTxMQ.get()
         can_bus.BSP_CAN_FillTxMailbox(p2mq)
-        time.sleep(1)
+        time.sleep(0.001)
 def localTskFunc():
+    p2mq = []
     while True:
         if not localMQ.empty():
             p2mq = localMQ.get()
-        time.sleep(1)
+        time.sleep(0.001)
 def cNMT_Callback():
     #Define code here
     while True:
-        time.sleep(1000)
+        time.sleep(1)
 
 
 
 led.LED_Init()
 #can_bus.BSP_CAN_Init()
-t = threading.Thread(target = DefaultTskFunc)
-t.start()
-t2 = threading.Thread(target = uRxTskFunc)
-t2.start()
+#t = threading.Thread(target = DefaultTskFunc)
+#t.start()
+#t2 = threading.Thread(target = uRxTskFunc)
+#t2.start()
 t3 = threading.Thread(target = cRxF0TskFunc)
 t3.start()
 t4 = threading.Thread(target = cRxF1TskFunc)
 t4.start()
-t5 = threading.Thread(target = uTxTskFunc)
-t5.start()
+#t5 = threading.Thread(target = uTxTskFunc)
+#t5.start()
 t6 = threading.Thread(target = cTxTskFunc)
 t6.start()
 t7 = threading.Thread(target = localTskFunc)

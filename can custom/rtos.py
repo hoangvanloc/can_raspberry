@@ -26,14 +26,14 @@ PWA11_PT_MSF = 0x03
 uRxBuf = []
 #cNMTimer = threading.Timer(2.0, cNMT_Callback) /*In original => osTimerPeriodic, Here we set is 2 seconds*/
 def DefaultTskFunc():
-    can_bus.devInfoMgt.mcbInfo.devStatus = NST_CScanning
+    can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_CScanning
     if not can_bus():
         print("Brocast Error!")
     else:
         if can_bus.numNodeOffline == 0:
-            can_bus.devInfoMgt.mcbInfo.devStatus = NST_CScanCplt
+            can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_CScanCplt
         else:
-            can_bus.devInfoMgt.mcbInfo.devStatus = NST_CScanUCplt
+            can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_CScanUCplt
         led.BSP_LED2_ON()
         time.sleep(0.001)
     #2. Obtain nodes basic-information And Initialize buffer
@@ -48,19 +48,19 @@ def DefaultTskFunc():
   #/*Connect should be launched by GUI Machine. And before that, MCB will wait to connect. */
     uRxBuf = port.read(17) #Read 17 byte from uart
     print('Start to connect with GUI Machine...\r\n')
-    can_bus.devInfoMgt.mcbInfo.devStatus = NST_WaitGUI
+    can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.GUI_ST.NST_WaitGUI
     cnctGUIFlag = 0 
     while cnctGUIFlag == 0:
         led.BSP_STLED_Toggle()
         time.sleep(0.5)
-    can_bus.devInfoMgt.mcbInfo.guiStatus = GUI_ST_Cnct
+    can_bus.devInfoMgt.mcbInfo.guiStatus = can_bus.GUI_ST.GUI_ST_Cnct
     #/*start to wait shakehands message from GUI Machine*/
     while cnctGUIFlag < 2:
         led.BSP_STLED_Toggle()
         time.sleep(0.1)
-    can_bus.devInfoMgt.mcbInfo.guiStatus = GUI_ST_ShakeHand
+    can_bus.devInfoMgt.mcbInfo.guiStatus = can_bus.GUI_ST.GUI_ST_ShakeHand
     led.BSP_STLED_ON()
-    can_bus.devInfoMgt.mcbInfo.devStatus = NST_Working
+    can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_Working
     while True:
         time.sleep(0.1)
 def uRxTskFunc():
@@ -115,7 +115,12 @@ def cRxF1TskFunc():
                 can_bus.devInfoMgt.dNodeHBFlag[_nodeId - 1] += 1
             if _cmdCode == 0:
                 if _len >=6:
-                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.busStatus = _dBuf #Need more information of struct-> this use pointer to copy data in to struct
+                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.busStatus = _dBuf[0]
+                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.devStatus = _dBuf[1]
+                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.foreTask = _dBuf[2]
+                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.foreTaskSt = _dBuf[3]
+                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.fTskStatus[0] = _dBuf[4]
+                    can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.fTskStatus[1] = _dBuf[5]
             elif _cmdCode == 1:
                 if _len == 8:
                     _checkSum = 0

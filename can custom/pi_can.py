@@ -49,7 +49,7 @@ class GUI_ST(enum.Enum):
 class Node_BasicInfo():
     busStatus = 0    #/* offline/online and enable/isolate */
     devStatus = 0     #/* running, stop, error, update or other status*/
-	foreTask = 0      #/* the type/id of task which is running(foreground task)*/
+    foreTask = 0      #/* the type/id of task which is running(foreground task)*/
     foreTaskSt = 0    #/*the fore task is running or stop*/ 
     fTskStatus = {0,0}#List contain unsigned char #/* foreTask state: circle/phase*/
 class MCB_BasicInfo():
@@ -57,7 +57,7 @@ class MCB_BasicInfo():
     canNodeStatus  = 0# /* the  number of DCB nodes online */
     devStatus = 0    #/* running, stop, error, update or other status*/
     foreTask = 0     #/* the type/id of task which is running(foreground task)*/
-	foreTaskSt = 0    #/*the fore task is running or stop*/ 
+    foreTaskSt = 0    #/*the fore task is running or stop*/ 
     fTskStatus = {0,0} #list contain unsigned char #/* foreTask state: circle/phase*/
 class Node_ItemRecord():
     offset = 0
@@ -88,7 +88,7 @@ devInfoMgt = DeviceInforManagerment()
 bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
 
 
-def BSP_CAN_FillTxMailbox(_pdata):
+def BSP_CAN_FillTxMailbox(_pdata = []):
     retval = 0
     _header = CAN_TxHeaderTypeDef()
     _header.IDE = False 
@@ -124,7 +124,7 @@ def BSP_CAN_Scan_BroadCast(self):
     
     for j in range(0,14):
         if (devInfoMgt.dNodeEnable[j] != 0):
-            if (devInfoMgt.dNodeOnline[j] >= CAN_NODE_OK):
+            if (devInfoMgt.dNodeOnline[j] >= CAN_ST.CAN_NODE_OK):
                 devInfoMgt.mcbInfo.canNodeStatus += 1
             else:
                 _txHeader.StdId = j
@@ -133,7 +133,7 @@ def BSP_CAN_Scan_BroadCast(self):
                 if retval < 0:
                     continue
                 time.sleep(0.15)
-                if (devInfoMgt.dNodeOnline[j] >= CAN_NODE_OK):
+                if (devInfoMgt.dNodeOnline[j] >= CAN_ST.CAN_NODE_OK):
                     devInfoMgt.mcbInfo.canNodeStatus += 1
                 else:
                     numNodeOffline += 1

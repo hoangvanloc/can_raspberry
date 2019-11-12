@@ -86,7 +86,7 @@ def cRxF0TskFunc():
     can_massage = can_bus.bus.recv()
     p2ar[6]       = can_massage.dlc & 0x0F
     p2ar[5]       = can_massage.arbitration_id & 0xFF
-    p2ar[4]       = ((can_massage.arbitration_id >> 8) & 0x07)
+    p2ar[4]       = (can_massage.arbitration_id >> 8) & 0x07
     if _rHeader.IDE == can_bus.CAN_ID_EXT:
         p2ar[4] |= 0x08
     if _rHeader.RTR == can_bus.CAN_RTR_REMOTE:

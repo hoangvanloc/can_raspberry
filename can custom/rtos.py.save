@@ -24,13 +24,11 @@ PWA11_PT_RCF = 0x01
 PWA11_PT_NMT = 0x02
 PWA11_PT_MSF = 0x03
 uRxBuf = []
-Default_DCBNodeEnable = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-Default_BroadcastInterval = 10; #/*unit is ms*/
-Default_HeatbeatPeriod   = 50; #/* uint is 100ms */
+#cNMTimer = threading.Timer(2.0, cNMT_Callback) /*In original => osTimerPeriodic, Here we set is 2 seconds*/
 def DefaultTskFunc():
     can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_CScanning
-    if not can_bus.BSP_CAN_Scan_BroadCast():
-        print("Broadcast Error!")
+    if not can_bus():
+        print("Brocast Error!")
     else:
         if can_bus.numNodeOffline == 0:
             can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_CScanCplt
@@ -41,7 +39,7 @@ def DefaultTskFunc():
     #2. Obtain nodes basic-information And Initialize buffer
     can_bus.BSP_CAN_FreshLLD()
     #allocate memory for DCB(LLDs) mirror state*/
-    #BSP_DevInfoMgt_AllocateDCBs() 
+    #  BSP_DevInfoMgt_AllocateDCBs() => we don't have document to port*/
     if not can_bus.BSP_CAN_StartHB_BroadCast():
         print('Error Can Start Heart Beat BroadCas Error!')
     cNMTimer = threading.Timer(200 * can_bus.devInfoMgt.hbPeriod/1000, cNMT_Callback)
@@ -165,76 +163,25 @@ def cNMT_Callback():
     while True:
         time.sleep(1)
 
-def KernelStart():    
-    #t = threading.Thread(target = DefaultTskFunc)
-    #t.start()
-    #t2 = threading.Thread(target = uRxTskFunc)
-    #t2.start()
-    t3 = threading.Thread(target = cRxF0TskFunc)
-    t3.start()
-    t4 = threading.Thread(target = cRxF1TskFunc)
-    t4.start()
-    #t5 = threading.Thread(target = uTxTskFunc)
-    #t5.start()
-    t6 = threading.Thread(target = cTxTskFunc)
-    t6.start()
-    t7 = threading.Thread(target = localTskFunc)
-    t7.start()
 
-def BSP_DevInfoMgt_Init():
-    #/*setup information*/
-    can_bus.devInfoMgt.broadInterval = Default_BroadcastInterval
-    can_bus.devInfoMgt.hbPeriod      = Default_HeatbeatPeriod
-    for i in range(0,14):
-        can_bus.devInfoMgt.dNodeEnable[i] = Default_DCBNodeEnable[i]
-        can_bus.devInfoMgt.dNodeOnline[i] = 0 # /* offline now */
-        can_bus.devInfoMgt.dNodeHBFlag[i] = 0
-    #/*Initial MCB status*/
-    can_bus.devInfoMgt.mcbInfo.devStatus     = 1# /* 1- Init*/
-    can_bus.devInfoMgt.mcbInfo.canNodeStatus = 0# /* haven't got any DCB nodes*/
-    can_bus.devInfoMgt.mcbInfo.guiStatus     = 0# /* haven't connect with GUI Machine */
-    can_bus.devInfoMgt.mcbInfo.foreTask      = 0# /* no any task */
-    can_bus.devInfoMgt.mcbInfo.fTskStatus[0] = 0# /* no task*/
-    can_bus.devInfoMgt.mcbInfo.fTskStatus[1] = 0# /* no task*/
 
-    #/*Initial DCB Mirror status*/
-    for j in range(0,14):
-        can_bus.devInfoMgt.dcbInfo[j].addStart = []
-        can_bus.devInfoMgt.dcbInfo[j].sumLen   = 0
+led.LED_Init()
+#can_bus.BSP_CAN_Init()
+#t = threading.Thread(target = DefaultTskFunc)
+#t.start()
+#t2 = threading.Thread(target = uRxTskFunc)
+#t2.start()
+t3 = threading.Thread(target = cRxF0TskFunc)
+t3.start()
+t4 = threading.Thread(target = cRxF1TskFunc)
+t4.start()
+#t5 = threading.Thread(target = uTxTskFunc)
+#t5.start()
+t6 = threading.Thread(target = cTxTskFunc)
+t6.start()
+t7 = threading.Thread(target = localTskFunc)
+t7.start()
 
-        can_bus.devInfoMgt.dcbInfo[j].basicInfo.busStatus = 0 #/* offline */
-        can_bus.devInfoMgt.dcbInfo[j].basicInfo.devStatus = 0 #/* reset */
-        can_bus.devInfoMgt.dcbInfo[j].basicInfo.foreTask  = 0 #/* no task */
+        
 
-        can_bus.devInfoMgt.dcbInfo[j].basicInfo.fTskStatus[0] = 0
-        can_bus.devInfoMgt.dcbInfo[j].basicInfo.fTskStatus[1] = 0
-
-        for k in range(0,13):
-            can_bus.devInfoMgt.dcbInfo[j].itemRcd[k].offset = 0
-            can_bus.devInfoMgt.dcbInfo[j].itemRcd[k].size   = 0
- #/*Calloc memory for MCB*/
- # /*1. check if the length is same*/
- # temp = 0;
- # for (uint8_t k = 0; k < 13; k++) {
- #   temp += devInfoMgt.mcbMemMgt.itemRcd[k].size;
- # }
- # if (temp != devInfoMgt.mcbMemMgt.sumLen) {
-#ifdef SHOW_DBG_MSG
- #   printf("MCB Memory configration error\r\n");
-#endif
- #   Error_Handler();
- # }
- # devInfoMgt.mcbMemMgt.addStart = (uint8_t *)calloc(temp, sizeof(uint8_t));
- # if (devInfoMgt.mcbMemMgt.addStart == NULL)
- #   Error_Handler();
- # /*format position*/
-    temp = 0
-    for k in range(0,13):
-        can_bus.devInfoMgt.mcbMemMgt.itemRcd[k].offset = temp
-        can_bus.devInfoMgt.mcbMemMgt.itemRcd[k].size
-
-BSP_DevInfoMgt_Init()
-can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_Ready       
-#can_bus.devInfoMgt.mcbInfo.guiStatus = can_bus.GUI_ST_RESET
-can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_CReady
-KernelStart()    
+    

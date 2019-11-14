@@ -51,23 +51,23 @@ class Node_BasicInfo():
     devStatus = 0     #/* running, stop, error, update or other status*/
     foreTask = 0      #/* the type/id of task which is running(foreground task)*/
     foreTaskSt = 0    #/*the fore task is running or stop*/ 
-    fTskStatus = {0,0}#List contain unsigned char #/* foreTask state: circle/phase*/
+    fTskStatus = [0,0]#List contain unsigned char #/* foreTask state: circle/phase*/
 class MCB_BasicInfo():
     guiStatus  = 0   # /* the connect situtus with GUI Machine(by UART now) */
     canNodeStatus  = 0# /* the  number of DCB nodes online */
     devStatus = 0    #/* running, stop, error, update or other status*/
     foreTask = 0     #/* the type/id of task which is running(foreground task)*/
     foreTaskSt = 0    #/*the fore task is running or stop*/ 
-    fTskStatus = {0,0} #list contain unsigned char #/* foreTask state: circle/phase*/
+    fTskStatus = [0,0] #list contain unsigned char #/* foreTask state: circle/phase*/
 class Node_ItemRecord():
     offset = 0
     size = 0
 class MCB_MemMgt():
-    # uint8_t *addStart;
+    addStart = []  #Allocate for memanager
     sumLen = 0
     itemRcd = [] #list contain Node_ItemRecord_Typedef
 class Node_Info():
-    #int8_t *addStart;             # /*Starting address of Node Information Buffer*/
+    addStart = []            # /*Starting address of Node Information Buffer*/
     sumLen = 0                    # /*the total size of Node Information Buffer*/
     basicInfo = Node_BasicInfo()    #/*the basic information of node*/
     itemRcd = [] # list contain Node_ItemRecord  #/*the information record for all nodes*/
@@ -88,7 +88,7 @@ devInfoMgt = DeviceInforManagerment()
 bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
 
 
-def BSP_CAN_FillTxMailbox(_pdata = []):
+def BSP_CAN_FillTxMailbox(_pdata):
     retval = 0
     _header = CAN_TxHeaderTypeDef()
     _header.IDE = False 
@@ -120,7 +120,7 @@ def BSP_CAN_Scan_BroadCast(self):
     if retval < 0:
         return 0
     #/*3. delay and wait. In this stage, task will automaticess rx message */
-    time.sleep(200 + devInfoMgt.broadInterval * 14) # /*The total wait time and 200ms delay*/
+    time.sleep((200 + devInfoMgt.broadInterval * 14)/1000) # /*The total wait time and 200ms delay*/
     
     for j in range(0,14):
         if (devInfoMgt.dNodeEnable[j] != 0):

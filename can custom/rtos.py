@@ -73,16 +73,18 @@ def uRxTskFunc():
                 if uRxBuf[4] & PWA11_FCC_MASK == PWA11_FCC_CMSG:
                     cTem_Buf = []
                     for i in range(0,13):
-                        cTem_Buf[i] = uRxBuf[i+2]
+                        cTem_Buf.append(uRxBuf[i+2])
                     cTxMQ.put(cTem_Buf)
                 if uRxBuf[4] & PWA11_FCC_MASK == PWA11_FCC_LUMSG:
                     cTem_Buf = []
                     for i in range(0,13):
-                        cTem_Buf[i] = uRxBuf[i+2]
+                        cTem_Buf.append(uRxBuf[i+2])
                     localMQ.put(cTem_Buf)
 def cRxF0TskFunc():
     _dBuf = []
-    p2ar = [15]
+    p2ar = []
+    for i in range(0.14):
+        p2ar.append
     _rHeader = can_bus.CAN_RxHeaderTypeDef()
     cRxF0Semphore.acquire()
     can_massage = can_bus.bus.recv()
@@ -141,7 +143,7 @@ def cRxF1TskFunc():
             else:
                 if _len == can_bus.devInfoMgt.dcbInfo[_nodeId].itemRcd[_cmdCode].size:
                     for i in range(0,_len):
-                        can_bus.devInfoMgt.dcbInfo[_nodeId].addStart[can_bus.devInfoMgt.dcbInfo[_nodeId].itemRcd[_cmdCode].offset + i] = _dBuf[i]
+                        can_bus.devInfoMgt.dcbInfo[_nodeId].addStart.insert(can_bus.devInfoMgt.dcbInfo[_nodeId].itemRcd[_cmdCode].offset + i,_dBuf[i]) 
 def uTxTskFunc():
     while True:
         if not uTxMQ.empty(): 
@@ -186,45 +188,45 @@ def BSP_DevInfoMgt_Init():
     can_bus.devInfoMgt.broadInterval = Default_BroadcastInterval
     can_bus.devInfoMgt.hbPeriod      = Default_HeatbeatPeriod
     for i in range(0,14):
-        can_bus.devInfoMgt.dNodeEnable[i] = Default_DCBNodeEnable[i]
-        can_bus.devInfoMgt.dNodeOnline[i] = 0 # /* offline now */
-        can_bus.devInfoMgt.dNodeHBFlag[i] = 0
+        can_bus.devInfoMgt.dNodeEnable.insert(i,Default_DCBNodeEnable[i])
+        can_bus.devInfoMgt.dNodeOnline.insert(i,0) # /* offline now */
+        can_bus.devInfoMgt.dNodeHBFlag.insert(i,0)
     #/*Initial MCB status*/
     can_bus.devInfoMgt.mcbInfo.devStatus     = 1# /* 1- Init*/
     can_bus.devInfoMgt.mcbInfo.canNodeStatus = 0# /* haven't got any DCB nodes*/
     can_bus.devInfoMgt.mcbInfo.guiStatus     = 0# /* haven't connect with GUI Machine */
     can_bus.devInfoMgt.mcbInfo.foreTask      = 0# /* no any task */
-    can_bus.devInfoMgt.mcbInfo.fTskStatus[0] = 0# /* no task*/
-    can_bus.devInfoMgt.mcbInfo.fTskStatus[1] = 0# /* no task*/
+    can_bus.devInfoMgt.mcbInfo.fTskStatus.insert(0,0)# /* no task*/
+    can_bus.devInfoMgt.mcbInfo.fTskStatus.insert(1,0)# /* no task*/
 
     #/*Initial DCB Mirror status*/
     for j in range(0,14):
-        can_bus.devInfoMgt.dcbInfo[j].addStart = []
         can_bus.devInfoMgt.dcbInfo[j].sumLen   = 0
 
         can_bus.devInfoMgt.dcbInfo[j].basicInfo.busStatus = 0 #/* offline */
         can_bus.devInfoMgt.dcbInfo[j].basicInfo.devStatus = 0 #/* reset */
         can_bus.devInfoMgt.dcbInfo[j].basicInfo.foreTask  = 0 #/* no task */
 
-        can_bus.devInfoMgt.dcbInfo[j].basicInfo.fTskStatus[0] = 0
-        can_bus.devInfoMgt.dcbInfo[j].basicInfo.fTskStatus[1] = 0
+        can_bus.devInfoMgt.dcbInfo[j].basicInfo.fTskStatus.insert(0,0)
+        can_bus.devInfoMgt.dcbInfo[j].basicInfo.fTskStatus.insert(1,0)
 
         for k in range(0,13):
             can_bus.devInfoMgt.dcbInfo[j].itemRcd[k].offset = 0
             can_bus.devInfoMgt.dcbInfo[j].itemRcd[k].size   = 0
- #/*Calloc memory for MCB*/
- # /*1. check if the length is same*/
- # temp = 0;
- # for (uint8_t k = 0; k < 13; k++) {
- #   temp += devInfoMgt.mcbMemMgt.itemRcd[k].size;
+        #/*Calloc memory for MCB*/
+        # /*1. check if the length is same*/
+        temp = 0
+        for k in range(0,13):
+            temp +=  can_bus.devInfoMgt.mcbMemMgt.itemRcd[k].size
+
+        if temp !=  can_bus.devInfoMgt.mcbMemMgt.sumLen: 
+            print("MCB Memory configration error\r\n")
+
+ #           Error_Handler()
  # }
- # if (temp != devInfoMgt.mcbMemMgt.sumLen) {
-#ifdef SHOW_DBG_MSG
- #   printf("MCB Memory configration error\r\n");
-#endif
- #   Error_Handler();
- # }
- # devInfoMgt.mcbMemMgt.addStart = (uint8_t *)calloc(temp, sizeof(uint8_t));
+ #   devInfoMgt.mcbMemMgt.addStart = (uint8_t *)calloc(temp, sizeof(uint8_t));
+        for i in range(0,temp):
+            can_bus.devInfoMgt.mcbMemMgt.addStart.insert(temp,0)
  # if (devInfoMgt.mcbMemMgt.addStart == NULL)
  #   Error_Handler();
  # /*format position*/
@@ -232,7 +234,7 @@ def BSP_DevInfoMgt_Init():
     for k in range(0,13):
         can_bus.devInfoMgt.mcbMemMgt.itemRcd[k].offset = temp
         can_bus.devInfoMgt.mcbMemMgt.itemRcd[k].size
-
+#Init 
 BSP_DevInfoMgt_Init()
 can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_Ready       
 #can_bus.devInfoMgt.mcbInfo.guiStatus = can_bus.GUI_ST_RESET

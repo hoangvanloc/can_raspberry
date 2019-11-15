@@ -2,10 +2,9 @@ import can
 import time
 import enum
 numNodeOffline = 0
-
 CAN_ID_EXT = True
+CAN_ID_STD = False
 CAN_RTR_REMOTE = True
-
 class CAN_TxHeaderTypeDef():
     IDE = False      #is extended_id? true for Use extend ID
     StdId = 0        #arbitration_id
@@ -65,39 +64,50 @@ class Node_ItemRecord():
 class MCB_MemMgt():
     addStart = []  #Allocate for memanager
     sumLen = 0
-    itemRcd = [] #list contain Node_ItemRecord_Typedef
+    itemRcd = []
+    temp = Node_ItemRecord()
+    for i in range(0,14):
+        itemRcd.append(temp) #list contain Node_ItemRecord_Typedef
 class Node_Info():
     addStart = []            # /*Starting address of Node Information Buffer*/
     sumLen = 0                    # /*the total size of Node Information Buffer*/
     basicInfo = Node_BasicInfo()    #/*the basic information of node*/
-    itemRcd = [] # list contain Node_ItemRecord  #/*the information record for all nodes*/
+    itemRcd = []
+    temp = Node_ItemRecord()
+    for i in range(0,14):
+        itemRcd.append(temp) # list contain Node_ItemRecord  #/*the information record for all nodes*/
+    
 class DeviceInforManagerment():
     dNodeEnable = []    #List contain Node Enable
     dNodeOnline = []    #List contain Node Online
     broadInterval = 1000
     hbPeriod = 1000
     dNodeHBFlag = []
-    dcbInfo = [] #list contain Node_Info()
+    dcbInfo = []
     mcbInfo = MCB_BasicInfo()
     mcbMemMgt = MCB_MemMgt()
-
-   
+    temp = Node_Info()
+    for i in range(0,14):
+        dcbInfo.append(temp)
+        dNodeEnable.append(0)
+        dNodeOnline.append(0)
+ 
 devInfoMgt = DeviceInforManagerment()
 #Need to define 2 paramter CAN_RTR_REMOTE and CAN_RTR_DATA
-
 bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
-
-
 def BSP_CAN_FillTxMailbox(_pdata):
     retval = 0
     _header = CAN_TxHeaderTypeDef()
-    _header.IDE = False 
-    _header.StdId = (_pdata[2] & 0x07) << 8
+    if _pdata == 0x11:  #/*check protocol version if it is 0x11*/     
+        _header.IDE = False #/*always stdandard or is not extend ID*/ 
+        _header.StdId = (_pdata[2] & 0x07) << 8
+        _header.StdId =  _header.StdId | _pdata[3]
     if (_pdata[2] & 0x04):
-         _header.RTR = True
+        _header.RTR = True
     else:
         _header.RTR = False                 
     _header.DLC   = (_pdata[4] & 0x0f)
+    _header.TransmitGlobalTime  = 0.0
     if _pdata[0] == 0x01:
         msg = can.Message(is_remote_frame=_header.RTR,arbitration_id=_header.StdId,data=_pdata[5],extended_id=_header.IDE,dlc=_header.DLC)    
         retval = bus.send(msg)
@@ -112,7 +122,7 @@ def BSP_CAN_Scan_BroadCast(self):
     _txHeader.ExtId = 0
     _txHeader.IDE   = False
     _txHeader.RTR   = True
-    _txHeader.DLC   = 6
+    _txHeader.DLC   = 6 #/*ask for 6 data from DCB nodes*/
     _txHeader.TransmitGlobalTime = 0.0
     #/*2. send out broadcast message*/
     msg = can.Message(is_remote_frame=_txHeader.RTR,arbitration_id=_txHeader.StdId,data=temp,dlc=_txHeader.DLC,extended_id=False)    
@@ -150,8 +160,8 @@ def BSP_CAN_StartHB_BroadCast(self):
     _txHeader.RTR   = False
     _txHeader.DLC   = 2 #/*ask for 6 data from DCB nodes*/
     _txHeader.TransmitGlobalTime = 0.0
-    _temp[0] = devInfoMgt.hbPeriod
-    _temp[1] = (devInfoMgt.hbPeriod >> 8)
+    _temp.append(devInfoMgt.hbPeriod)
+    _temp.append(devInfoMgt.hbPeriod >> 8)
     msg = can.Message(arbitration_id=_txHeader.StdId,data=_temp,dlc=_txHeader.DLC,extended_id=False)    
     retval = bus.send(msg)
     return retval

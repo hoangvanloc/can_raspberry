@@ -226,7 +226,7 @@ def BSP_DevInfoMgt_Init():
  # }
  #   devInfoMgt.mcbMemMgt.addStart = (uint8_t *)calloc(temp, sizeof(uint8_t));
         for i in range(0,temp):
-            can_bus.devInfoMgt.mcbMemMgt.addStart.insert(temp,0)
+            can_bus.devInfoMgt.mcbMemMgt.addStart.insert(i,0)
  # if (devInfoMgt.mcbMemMgt.addStart == NULL)
  #   Error_Handler();
  # /*format position*/

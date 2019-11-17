@@ -3,6 +3,7 @@ import Queue
 import pi_can as can_bus
 import can
 import pi_led as led
+import sys
 # First install Serial sudo apt-get install python-serial
 import serial
 port = serial.Serial("/dev/ttyAMA0", baudrate=115200, timeout=3.0)
@@ -36,50 +37,58 @@ def DefaultTskFunc():
             can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_CScanCplt
         else:
             can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_CScanUCplt
-        led.BSP_LED2_ON()
-        time.sleep(0.001)
+    #   led.BSP_LED2_ON()
+    #    time.sleep(0.001)
     #2. Obtain nodes basic-information And Initialize buffer
     can_bus.BSP_CAN_FreshLLD()
     #allocate memory for DCB(LLDs) mirror state*/
     #BSP_DevInfoMgt_AllocateDCBs() 
     if not can_bus.BSP_CAN_StartHB_BroadCast():
-        print('Error Can Start Heart Beat BroadCas Error!')
-    cNMTimer = threading.Timer(200 * can_bus.devInfoMgt.hbPeriod/1000, cNMT_Callback)
-    cNMTimer.start()
+        print('Error Can Start Heart Beat BroadCast Error!')
+ #   cNMTimer = threading.Timer(200 * can_bus.devInfoMgt.hbPeriod/1000, cNMT_Callback)
+ #   cNMTimer.start()
   #  /* 4. Connect with GUI Machine and Shake hands*/
   #/*Connect should be launched by GUI Machine. And before that, MCB will wait to connect. */
-    uRxBuf = port.read(17) #Read 17 byte from uart
-    print('Start to connect with GUI Machine...\r\n')
-    can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.GUI_ST.NST_WaitGUI
-    cnctGUIFlag = 0 
-    while cnctGUIFlag == 0:
-        led.BSP_STLED_Toggle()
-        time.sleep(0.5)
-    can_bus.devInfoMgt.mcbInfo.guiStatus = can_bus.GUI_ST.GUI_ST_Cnct
-    #/*start to wait shakehands message from GUI Machine*/
-    while cnctGUIFlag < 2:
-        led.BSP_STLED_Toggle()
-        time.sleep(0.1)
-    can_bus.devInfoMgt.mcbInfo.guiStatus = can_bus.GUI_ST.GUI_ST_ShakeHand
-    led.BSP_STLED_ON()
+ #   uRxBuf = port.read(17) #Read 17 byte from uart
+ #   print('Start to connect with GUI Machine...\r\n')
+ #   can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.GUI_ST.NST_WaitGUI
+ #   cnctGUIFlag = 0 
+ #   while cnctGUIFlag == 0:
+ #       led.BSP_STLED_Toggle()
+ #       time.sleep(0.5)
+ #   can_bus.devInfoMgt.mcbInfo.guiStatus = can_bus.GUI_ST.GUI_ST_Cnct
+ #   #/*start to wait shakehands message from GUI Machine*/
+ #   while cnctGUIFlag < 2:
+ #       led.BSP_STLED_Toggle()
+ #       time.sleep(0.1)
+  #  can_bus.devInfoMgt.mcbInfo.guiStatus = can_bus.GUI_ST.GUI_ST_ShakeHand
+  #  led.BSP_STLED_ON()
     can_bus.devInfoMgt.mcbInfo.devStatus = can_bus.Node_ST.NST_Working
     while True:
         time.sleep(0.1)
+#> |0x11|IDE|0x0A0 or 0x1A0 |DATA|0~8|No Meaning| Turn on BlueLight
+#> |0x11|IDE|0x0A2 or 0x1A2 |DATA|0~8|No Meaning| Turn off BlueLight
+#data = [0x11,0, 0, 0xA0, 0, 1] #turn on led
+#data = [0x11,0, 0, 0xA2, 0, 1]
 def uRxTskFunc():
+    temp = []
     while True:
         uRxSemphore.acquire()
-        if parseU2Rx() != 0: #We cannot find this function
-            if uRxBuf[2] == 0x11:
-                if uRxBuf[4] & PWA11_FCC_MASK == PWA11_FCC_CMSG:
-                    cTem_Buf = []
-                    for i in range(0,13):
-                        cTem_Buf.append(uRxBuf[i+2])
-                    cTxMQ.put(cTem_Buf)
-                if uRxBuf[4] & PWA11_FCC_MASK == PWA11_FCC_LUMSG:
-                    cTem_Buf = []
-                    for i in range(0,13):
-                        cTem_Buf.append(uRxBuf[i+2])
-                    localMQ.put(cTem_Buf)
+        temp = sys.argv[1]
+        cTxMQ.put(temp)
+        #if parseU2Rx() != 0: 
+        #    if uRxBuf[2] == 0x11:
+        #        if uRxBuf[4] & PWA11_FCC_MASK == PWA11_FCC_CMSG:
+        #            cTem_Buf = []
+        #            for i in range(0,13):
+        #                cTem_Buf.append(uRxBuf[i+2])
+        #            cTxMQ.put(cTem_Buf)
+        #        if uRxBuf[4] & PWA11_FCC_MASK == PWA11_FCC_LUMSG:
+        #            cTem_Buf = []
+        #            for i in range(0,13):
+        #                cTem_Buf.append(uRxBuf[i+2])
+        #           localMQ.put(cTem_Buf)
+
 def cRxF0TskFunc():
     _dBuf = []
     for i in range(0,8):
@@ -104,17 +113,16 @@ def cRxF1TskFunc():
     _dBuf = []
     for i in range(0,8):
         _dBuf.append(0)
-    _rHeader = can_bus.CAN_RxHeaderTypeDef()
     while True:
         cRxF1Semphore.acquire()
-        _rHeader = can_bus.bus.recv()	# Wait until a message is received.
-        
-        _cmdCode = _rHeader.StdId & 0xFF
-        _len     = _rHeader.DLC & 0x0F
-        _nodeId  = _cmdCode >> 4
+        message = can_bus.bus.recv()	# Wait until a message is received.
+        _cmdCode = message.arbitration_id & 0xFF #Std ID
+        _len     = message.dlc & 0x0F
+        _nodeId  = message >> 4
         _cmdCode &= 0x0F
+        _dBuf = message.data
     #Show debug here 
-        _frameType = (_rHeader.arbitration_id >> 8) & 0x07
+        _frameType = (message.arbitration_id >> 8) & 0x07
         if _frameType != 2:
             print('maybe CAN file setup error\r\n')
     #/*setup the specific node heart beat flag. Once find any frames from the specific nodes*/
@@ -185,8 +193,8 @@ def cNMT_Callback():
         time.sleep(1)
 
 def KernelStart():    
-    #t = threading.Thread(target = DefaultTskFunc)
-    #t.start()
+    t = threading.Thread(target = DefaultTskFunc)
+    t.start()
     #t2 = threading.Thread(target = uRxTskFunc)
     #t2.start()
     t3 = threading.Thread(target = cRxF0TskFunc)

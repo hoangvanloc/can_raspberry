@@ -82,15 +82,17 @@ def uRxTskFunc():
                     localMQ.put(cTem_Buf)
 def cRxF0TskFunc():
     _dBuf = []
+    for i in range(0,8):
+        _dBuf.append(0)
     p2ar = []
-    for i in range(0.14):
-        p2ar.append
+    for i in range(0,15):
+        p2ar.append(0)
     _rHeader = can_bus.CAN_RxHeaderTypeDef()
     cRxF0Semphore.acquire()
-    can_massage = can_bus.bus.recv()
-    p2ar[6]       = can_massage.dlc & 0x0F
-    p2ar[5]       = can_massage.arbitration_id & 0xFF
-    p2ar[4]       = (can_massage.arbitration_id >> 8) & 0x07
+    _rHeader = can_bus.bus.recv()
+    p2ar[6]       = _rHeader.DLC & 0x0F
+    p2ar[5]       = _rHeader.StdId & 0xFF
+    p2ar[4]       = (_rHeader.StdId >> 8) & 0x07
     if _rHeader.IDE == can_bus.CAN_ID_EXT:
         p2ar[4] |= 0x08
     if _rHeader.RTR == can_bus.CAN_RTR_REMOTE:
@@ -100,24 +102,30 @@ def cRxF0TskFunc():
     uTxMQ.put(p2ar) 
 def cRxF1TskFunc():
     _dBuf = []
+    for i in range(0,8):
+        _dBuf.append(0)
     _rHeader = can_bus.CAN_RxHeaderTypeDef()
     while True:
         cRxF1Semphore.acquire()
         _rHeader = can_bus.bus.recv()	# Wait until a message is received.
-        _dBuf = _rHeader.data
-        _cmdCode = _rHeader.arbitration_id & 0xFF
-        _len     = _rHeader.dlc & 0x0F
+        
+        _cmdCode = _rHeader.StdId & 0xFF
+        _len     = _rHeader.DLC & 0x0F
         _nodeId  = _cmdCode >> 4
         _cmdCode &= 0x0F
-    #Show debug here
+    #Show debug here 
         _frameType = (_rHeader.arbitration_id >> 8) & 0x07
         if _frameType != 2:
             print('maybe CAN file setup error\r\n')
     #/*setup the specific node heart beat flag. Once find any frames from the specific nodes*/
         if _nodeId > 0 and _nodeId != 15:
+             #/*set heartbeat flag*/
             if can_bus.devInfoMgt.dNodeHBFlag[_nodeId - 1] < 0xFF:
                 can_bus.devInfoMgt.dNodeHBFlag[_nodeId - 1] += 1
+            #/*should add a wr-lock in case of memory conflict*/
+            #/*update node information struct*/
             if _cmdCode == 0:
+                 #/*update basic information*/
                 if _len >=6:
                     can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.busStatus = _dBuf[0]
                     can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.devStatus = _dBuf[1]
@@ -126,6 +134,7 @@ def cRxF1TskFunc():
                     can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.fTskStatus[0] = _dBuf[4]
                     can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.fTskStatus[1] = _dBuf[5]
             elif _cmdCode == 1:
+            #/*fill the item record zone no.1*/
                 if _len == 8:
                     _checkSum = 0
                     for i in range(0,7):
@@ -135,29 +144,37 @@ def cRxF1TskFunc():
                         for j in range(0,6):
                             can_bus.devInfoMgt.dcbInfo[_nodeId].itemRcd[j].size = _dBuf[1 + j]
             elif _cmdCode == 2:
+            #/*fill the item record zone no.2 */
                 if _len == 8:
                     _checkSum = 0
                     for i in range(0,7):
                         for j in range(0,7):
                             can_bus.devInfoMgt.dcbInfo[_nodeId].itemRcd[6 + j].size = _dBuf[j]
             else:
+            #/*update the information at mirror buffer*/
                 if _len == can_bus.devInfoMgt.dcbInfo[_nodeId].itemRcd[_cmdCode].size:
                     for i in range(0,_len):
                         can_bus.devInfoMgt.dcbInfo[_nodeId].addStart.insert(can_bus.devInfoMgt.dcbInfo[_nodeId].itemRcd[_cmdCode].offset + i,_dBuf[i]) 
 def uTxTskFunc():
+    p2mq = can_bus.uTxMQTypedef
     while True:
         if not uTxMQ.empty(): 
-            p2m1 = uTxMQ.get()
-            # BSP_PackUTxMsg(p2mq)  ? where is this funtion?
+            p2mq = uTxMQ.get()
+            print('Receive data from FIFO 0:{}'.format(p2mq))
+            #BSP_PackUTxMsg(p2mq)
 def cTxTskFunc():
-    p2mq = []
+    p2mq = can_bus.cTxMQTypedef
     while True:
-        if not cTxMQ.empty():
+        if not cTxMQ.empty():  
             p2mq = cTxMQ.get()
-        can_bus.BSP_CAN_FillTxMailbox(p2mq)
+            print('Send out data:{}'.format(p2mq))
+            if can_bus.BSP_CAN_FillTxMailbox(p2mq) == 1:
+                print('Send out data success!')
+            else:
+                print('Send out data fail')
         time.sleep(0.001)
 def localTskFunc():
-    p2mq = []
+    p2mq = can_bus.localMQTypedef
     while True:
         if not localMQ.empty():
             p2mq = localMQ.get()
@@ -180,8 +197,8 @@ def KernelStart():
     #t5.start()
     t6 = threading.Thread(target = cTxTskFunc)
     t6.start()
-    t7 = threading.Thread(target = localTskFunc)
-    t7.start()
+    #t7 = threading.Thread(target = localTskFunc)
+    #t7.start()
 
 def BSP_DevInfoMgt_Init():
     #/*setup information*/

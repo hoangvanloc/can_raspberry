@@ -5,6 +5,14 @@ numNodeOffline = 0
 CAN_ID_EXT = True
 CAN_ID_STD = False
 CAN_RTR_REMOTE = True
+uTxMQTypedef= []
+cTxMQTypedef = []
+localMQTypedef = []
+for i in range(0,14):
+    cTxMQTypedef.append(0)
+    localMQTypedef.append(0)
+for i in range(0,17):
+    uTxMQTypedef.append(0)
 class CAN_TxHeaderTypeDef():
     IDE = False      #is extended_id? true for Use extend ID
     StdId = 0        #arbitration_id
@@ -95,6 +103,11 @@ class DeviceInforManagerment():
 devInfoMgt = DeviceInforManagerment()
 #Need to define 2 paramter CAN_RTR_REMOTE and CAN_RTR_DATA
 bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
+for i in range(0,13):
+    uTxMQTypedef.append(0)
+    cTxMQTypedef.append(0)
+for i in range(0,17):
+    localMQTypedef.append(0)
 def BSP_CAN_FillTxMailbox(_pdata):
     retval = 0
     _header = CAN_TxHeaderTypeDef()

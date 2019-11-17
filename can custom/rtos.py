@@ -88,7 +88,20 @@ def uRxTskFunc():
         #            for i in range(0,13):
         #                cTem_Buf.append(uRxBuf[i+2])
         #           localMQ.put(cTem_Buf)
-
+def cRxTaskFunc():
+    _dBuf = []
+    for i in range(0,8):
+        _dBuf.append(0)
+    while True:
+        cRxF1Semphore.acquire()
+        message = can_bus.bus.recv()	# Wait until a message is received.
+        _cmdCode = message.arbitration_id & 0xFF #Std ID
+        _len     = message.dlc & 0x0F
+        _nodeId  = message >> 4
+        _cmdCode &= 0x0F
+        _dBuf = message.data
+        if _cmdCode == 2:
+            print('Receive Response! Data is: {}'.format(_dBuf[5]))
 def cRxF0TskFunc():
     _dBuf = []
     for i in range(0,8):
@@ -133,6 +146,7 @@ def cRxF1TskFunc():
             #/*should add a wr-lock in case of memory conflict*/
             #/*update node information struct*/
             if _cmdCode == 0:
+
                  #/*update basic information*/
                 if _len >=6:
                     can_bus.devInfoMgt.dcbInfo[_nodeId].basicInfo.busStatus = _dBuf[0]
@@ -197,8 +211,8 @@ def KernelStart():
     t.start()
     #t2 = threading.Thread(target = uRxTskFunc)
     #t2.start()
-    t3 = threading.Thread(target = cRxF0TskFunc)
-    t3.start()
+    #t3 = threading.Thread(target = cRxF0TskFunc)
+    #t3.start()
     t4 = threading.Thread(target = cRxF1TskFunc)
     t4.start()
     #t5 = threading.Thread(target = uTxTskFunc)

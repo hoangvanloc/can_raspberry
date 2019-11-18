@@ -68,14 +68,15 @@ def DefaultTskFunc():
         time.sleep(0.1)
 #> |0x11|IDE|0x0A0 or 0x1A0 |DATA|0~8|No Meaning| Turn on BlueLight
 #> |0x11|IDE|0x0A2 or 0x1A2 |DATA|0~8|No Meaning| Turn off BlueLight
-#data = [0x11,0, 0, 0xA0, 0, 1] #turn on led
-#data = [0x11,0, 0, 0xA2, 0, 1]
+data_on = [0x11,0,0,0xA0,0,1] #turn on led
+data_off = [0x11,0,0,0xA2,0,1]#Turn off led
 def uRxTskFunc():
-    temp = []
     while True:
         uRxSemphore.acquire()
-        temp = sys.argv[1]
-        cTxMQ.put(temp)
+        cTxMQ.put(data_on)
+        time.sleep(1)
+        cTxMQ.put(data_off)
+        time.sleep(1)
         #if parseU2Rx() != 0: 
         #    if uRxBuf[2] == 0x11:
         #        if uRxBuf[4] & PWA11_FCC_MASK == PWA11_FCC_CMSG:
@@ -88,6 +89,7 @@ def uRxTskFunc():
         #            for i in range(0,13):
         #                cTem_Buf.append(uRxBuf[i+2])
         #           localMQ.put(cTem_Buf)
+        
 def cRxTaskFunc():
     _dBuf = []
     for i in range(0,8):

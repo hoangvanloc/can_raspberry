@@ -209,8 +209,8 @@ def cNMT_Callback():
         time.sleep(1)
 
 def KernelStart():    
-    t = threading.Thread(target = DefaultTskFunc)
-    t.start()
+    #t = threading.Thread(target = DefaultTskFunc)
+    #t.start()
     #t2 = threading.Thread(target = uRxTskFunc)
     #t2.start()
     #t3 = threading.Thread(target = cRxF0TskFunc)

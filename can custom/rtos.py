@@ -95,15 +95,17 @@ def cRxTaskFunc():
     for i in range(0,8):
         _dBuf.append(0)
     while True:
-        cRxF1Semphore.acquire()
+        #cRxF1Semphore.acquire()
         message = can_bus.bus.recv()	# Wait until a message is received.
         _cmdCode = message.arbitration_id & 0xFF #Std ID
         _len     = message.dlc & 0x0F
-        _nodeId  = message >> 4
+        _nodeId  = _cmdCode >> 4
         _cmdCode &= 0x0F
         _dBuf = message.data
+        print(_dBuf)
         if _cmdCode == 2:
             print('Receive Response! Data is: {}'.format(_dBuf[5]))
+        time.sleep(0.01)
 def cRxF0TskFunc():
     _dBuf = []
     for i in range(0,8):
@@ -131,11 +133,13 @@ def cRxF1TskFunc():
     while True:
         cRxF1Semphore.acquire()
         message = can_bus.bus.recv()	# Wait until a message is received.
+        
         _cmdCode = message.arbitration_id & 0xFF #Std ID
         _len     = message.dlc & 0x0F
-        _nodeId  = message >> 4
+        _nodeId  = _cmdCode >> 4
         _cmdCode &= 0x0F
         _dBuf = message.data
+        print(_dBuf)
     #Show debug here 
         _frameType = (message.arbitration_id >> 8) & 0x07
         if _frameType != 2:
@@ -211,16 +215,19 @@ def cNMT_Callback():
 def KernelStart():    
     #t = threading.Thread(target = DefaultTskFunc)
     #t.start()
-    #t2 = threading.Thread(target = uRxTskFunc)
-    #t2.start()
+    t2 = threading.Thread(target = uRxTskFunc)
+    t2.start()
+
     #t3 = threading.Thread(target = cRxF0TskFunc)
     #t3.start()
-    t4 = threading.Thread(target = cRxF1TskFunc)
+    t4 = threading.Thread(target = cRxTaskFunc)
     t4.start()
+
     #t5 = threading.Thread(target = uTxTskFunc)
     #t5.start()
     t6 = threading.Thread(target = cTxTskFunc)
     t6.start()
+
     #t7 = threading.Thread(target = localTskFunc)
     #t7.start()
 

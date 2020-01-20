@@ -116,19 +116,19 @@ def BSP_CAN_FillTxMailbox(_pdata):
         _header.IDE = False #/*always stdandard or is not extend ID*/ 
         _header.StdId = (_pdata[2] & 0x07) << 8 #Get high byte
         _header.StdId =  _header.StdId | _pdata[3] #or with low byte
-    if (_pdata[2] & 0x04):
-        _header.RTR = True
-    else:
-        _header.RTR = False                 
-    _header.DLC   = (_pdata[4] & 0x0f)
-    _header.TransmitGlobalTime  = 0.0
-    if _pdata[0] == 0x01:
-        msg = can.Message(is_remote_frame=_header.RTR,arbitration_id=_header.StdId,data=_pdata[5],extended_id=_header.IDE,dlc=_header.DLC)    
-        try:
-            bus.send(msg)
-        except can.CanError:
-            print("Message Heart beat is not sent!")
-            retval = 0
+        if (_pdata[2] & 0x04):
+            _header.RTR = True
+        else:
+            _header.RTR = False                 
+        _header.DLC   = (_pdata[4] & 0x0f)
+        _header.TransmitGlobalTime  = 0.0
+
+    msg = can.Message(is_remote_frame=_header.RTR,arbitration_id=_header.StdId,data=_pdata[5],extended_id=_header.IDE,dlc=_header.DLC)    
+    try:
+        bus.send(msg)
+    except can.CanError:
+        print("Message is not sent!")
+        retval = 0
     return retval
 def BSP_CAN_Scan_BroadCast(self):
     temp = []
